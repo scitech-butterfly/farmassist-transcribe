@@ -8,10 +8,13 @@ app = Flask(__name__)
 CORS(app)
 
 # Load the Whisper model once at startup
-model = whisper.load_model("small")  # or "base" for faster load, "medium" for better accuracy
+model = None   # lazy load
 
 @app.route("/api/transcribe", methods=["POST"])
 def transcribe():
+    global model
+    if model is None:
+        model = whisper.load_model("tiny")   # smallest model
     if "audio" not in request.files:
         return jsonify({"error": "No audio file provided"}), 400
 
@@ -37,3 +40,4 @@ def transcribe():
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5001)
+
