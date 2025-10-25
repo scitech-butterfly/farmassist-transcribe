@@ -7,8 +7,7 @@ import os
 app = Flask(__name__)
 # Allow requests only from your frontend URLs
 CORS(app, resources={r"/*": {"origins": [
-    "http://localhost:3000",
-    "https://farmassist-frontend.onrender.com"
+    "http://localhost:3000"
 ]}})
 
 
@@ -45,5 +44,6 @@ def transcribe():
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5001)
+
 
 
