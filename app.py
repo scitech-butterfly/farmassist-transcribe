@@ -5,7 +5,12 @@ import tempfile
 import os
 
 app = Flask(__name__)
-CORS(app)
+# Allow requests only from your frontend URLs
+CORS(app, resources={r"/*": {"origins": [
+    "http://localhost:3000",
+    "https://farmassist-frontend.onrender.com"
+]}})
+
 
 # Load the Whisper model once at startup
 model = None   # lazy load
@@ -40,4 +45,5 @@ def transcribe():
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5001)
+
 
