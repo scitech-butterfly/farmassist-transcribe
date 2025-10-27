@@ -1,47 +1,57 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-import whisper
+import speech_recognition as sr
 import tempfile
 import os
+from pydub import AudioSegment
 
 app = Flask(__name__)
-# Allow requests only from your frontend URLs
-CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
-
-# Load the Whisper model once at startup
-model = None   # lazy load
+CORS(app, resources={r"/*": {"origins": [
+    "http://localhost:3000",
+    "https://farmassist-frontend.onrender.com"
+]}})
 
 @app.route("/api/transcribe", methods=["POST"])
 def transcribe():
-    global model
-    if model is None:
-        model = whisper.load_model("tiny")   # smallest model
     if "audio" not in request.files:
         return jsonify({"error": "No audio file provided"}), 400
 
     audio_file = request.files["audio"]
 
-    # Save temp file
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp:
+    # Save the MP3 temporarily
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as tmp:
         audio_file.save(tmp.name)
-        tmp_path = tmp.name
+        mp3_path = tmp.name
+
+    wav_path = mp3_path.replace(".mp3", ".wav")
 
     try:
-        # Transcribe (auto-detect language)
-        result = model.transcribe(tmp_path, language=None)
-        text = result["text"].strip()
-        lang = result.get("language", "unknown")
-        return jsonify({"text": text, "language": lang})
+        # Convert MP3 → WAV (Google Speech only supports wav/flac/aiff)
+        AudioSegment.from_mp3(mp3_path).export(wav_path, format="wav")
+
+        recognizer = sr.Recognizer()
+        with sr.AudioFile(wav_path) as source:
+            audio_data = recognizer.record(source)
+
+        # 🔹 Try English first
+        try:
+            text = recognizer.recognize_google(audio_data, language="en-IN")
+            detected_lang = "en"
+        except sr.UnknownValueError:
+            # 🔹 Retry with Hindi
+            text = recognizer.recognize_google(audio_data, language="hi-IN")
+            detected_lang = "hi"
+
+        return jsonify({"text": text, "language": detected_lang})
+
     except Exception as e:
         print("Error:", e)
         return jsonify({"error": str(e)}), 500
     finally:
-        os.remove(tmp_path)
+        os.remove(mp3_path)
+        if os.path.exists(wav_path):
+            os.remove(wav_path)
 
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5001)
-
-
-
-
