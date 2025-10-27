@@ -4,3 +4,5 @@ torch
 torchaudio
 pydub
 flask-cors
+SpeechRecognition
+pydub
