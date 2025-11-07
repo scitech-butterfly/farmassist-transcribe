@@ -38,9 +38,13 @@ def transcribe():
             text = recognizer.recognize_google(audio_data, language="en-IN")
             detected_lang = "en"
         except sr.UnknownValueError:
-            # 🔹 Retry with Hindi
-            text = recognizer.recognize_google(audio_data, language="hi-IN")
-            detected_lang = "hi"
+            try:
+                text = recognizer.recognize_google(audio_data, language="hi-IN")
+                detected_lang = "hi"
+            except sr.UnknownValueError:
+                # Finally, try Marathi
+                text = recognizer.recognize_google(audio_data, language="mr-IN")
+                detected_lang = "mr"
 
         return jsonify({"text": text, "language": detected_lang})
 
