@@ -8,8 +8,7 @@ from pydub import AudioSegment
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": [
     "http://localhost:3000",
-    "https://farmassist-frontend.onrender.com",
-    "https://farm-assist-amber.vercel.app"
+    "https://farmassist-frontend.onrender.com"
 ]}})
 
 @app.route("/api/transcribe", methods=["POST"])
@@ -60,5 +59,6 @@ def transcribe():
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5001)
+
 
 
